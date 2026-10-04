@@ -9,7 +9,7 @@
             <h2 class="mb-3 text-danger">Delete Book</h2>
             <p>Are you sure you want to delete the book <strong>"{{ book.title }}"</strong>?</p>
             
-            <form method="post">
+            <form method="post" class="mt-3">
                 {% csrf_token %}
                 <a href="{% url 'store:book_list' %}" class="btn btn-secondary">Cancel</a>
                 <button type="submit" class="btn btn-danger">Yes, Delete</button>
