@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Add New Book - Bookstore{% endblock %}
+{% block title %}{% if object %}Edit Book{% else %}Add New Book{% endif %} - Bookstore{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
         <div class="card shadow-sm border-0 p-4">
-            <h2 class="mb-4 text-center fw-bold">Add New Book</h2>
-            
+            <h2 class="mb-4 text-center fw-bold">{% if object %}Edit Book{% else %}Add New Book{% endif %}</h2>
+
             <form method="post">
                 {% csrf_token %}
 
