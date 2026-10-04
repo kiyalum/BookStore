@@ -9,8 +9,8 @@ class BookForm(forms.ModelForm):
         label="Category",
         widget=forms.TextInput(
             attrs={
-                  "class": "form-control",
-                  "placeholder": "Enter category name",
+                "class": "form-control",
+                "placeholder": "Enter category name",
             }
         ),
     )
@@ -27,8 +27,11 @@ class BookForm(forms.ModelForm):
         }
 
     def save(self, commit=True):
-        cat_name = self.cleaned_data["category_name"].strip()
+        old_category = None
+        if self.instance.pk:
+            old_category = Book.objects.get(pk=self.instance.pk).category
 
+        cat_name = self.cleaned_data["category_name"].strip()
         cat_slug = slugify(cat_name)
 
         category, created = Category.objects.get_or_create(
@@ -37,6 +40,10 @@ class BookForm(forms.ModelForm):
 
         book = super().save(commit=False)
         book.category = category
+
         if commit:
             book.save()
+            if old_category and old_category != category:
+                if not old_category.books.exists():
+                    old_category.delete()
         return book
