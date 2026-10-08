@@ -13,7 +13,11 @@
             <div>
                 {% if user.is_authenticated %}
                     <span class="text-light me-3">Hello, {{ user.username }}</span>
-                    <a href="{% url 'store:book_create' %}" class="btn btn-outline-light btn-sm me-2">+ Add Book</a>
+
+                    {% if user.is_superuser or perms.store.add_book %}
+                        <a href="{% url 'store:book_create' %}" class="btn btn-outline-light btn-sm me-2">+ Add Book</a>
+                    {% endif %}
+
                     <form action="{% url 'store:logout' %}" method="post" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>

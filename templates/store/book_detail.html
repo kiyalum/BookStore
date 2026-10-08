@@ -26,8 +26,13 @@
             <div class="d-flex justify-content-between">
                 <a href="{% url 'store:book_list' %}" class="btn btn-secondary">Back to Catalog</a>
                 <div>
-                    <a href="{% url 'store:book_update' book.id %}" class="btn btn-warning">Edit</a>
-                    <a href="{% url 'store:book_delete' book.id %}" class="btn btn-danger">Delete</a>
+                    {% if user.is_superuser or perms.store.change_book %}
+                        <a href="{% url 'store:book_update' book.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                    {% endif %}
+
+                    {% if user.is_superuser or perms.store.delete_book %}
+                        <a href="{% url 'store:book_delete' book.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
