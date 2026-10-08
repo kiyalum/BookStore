@@ -157,3 +157,7 @@ LOGGING = {
         },
     },
 }
+
+LOGIN_URL = 'store:login'
+LOGIN_REDIRECT_URL = 'store:book_list'
+LOGOUT_REDIRECT_URL = 'store:book_list'
