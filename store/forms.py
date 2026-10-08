@@ -1,6 +1,18 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.utils.text import slugify
-from .models import Book, Category
+from .models import Book, Category, CustomUser
+
+
+class UserRegistrationForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = CustomUser
+        fields = ('username', 'email', 'phone')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
 
 
 class BookForm(forms.ModelForm):
