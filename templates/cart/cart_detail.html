@@ -12,8 +12,8 @@
                     <thead>
                         <tr>
                             <th>Book</th>
-                            <th>Quantity</th>
-                            <th>Remove</th>
+                            <th style="width: 150px;">Quantity</th>
+                            <th class="text-center">Remove</th>
                             <th>Unit Price</th>
                             <th>Total Price</th>
                         </tr>
@@ -23,11 +23,23 @@
                             {% with book=item.book %}
                             <tr>
                                 <td class="fw-semibold">{{ book.title }}</td>
-                                <td>{{ item.quantity }}</td>
                                 <td>
+                                    <!-- Форма для оновлення кількості -->
+                                    <form action="{% url 'cart:cart_add' book.id %}" method="post" class="d-flex align-items-center">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="override" value="True">
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ book.stock }}" class="form-control form-control-sm me-2" style="width: 70px;">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Update quantity">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="text-center">
                                     <form action="{% url 'cart:cart_remove' book.id %}" method="post">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Remove (1 pcs.)
+                                        </button>
                                     </form>
                                 </td>
                                 <td>${{ item.price }}</td>
@@ -43,9 +55,20 @@
                         </tr>
                     </tfoot>
                 </table>
-                <div class="d-flex justify-content-between mt-4">
+                <div class="d-flex justify-content-between align-items-center mt-4">
                     <a href="{% url 'store:book_list' %}" class="btn btn-secondary">Continue Shopping</a>
-                    <a href="{% url 'orders:order_create' %}" class="btn btn-success">Proceed to Checkout</a>
+                    
+                    <div>
+                        <!-- Кнопка очистити весь кошик -->
+                        <form action="{% url 'cart:cart_clear' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger me-2">
+                                <i class="bi bi-trash3"></i> Remove All
+                            </button>
+                        </form>
+
+                        <a href="{% url 'orders:order_create' %}" class="btn btn-success">Proceed to Checkout</a>
+                    </div>
                 </div>
             {% else %}
                 <div class="text-center py-5">

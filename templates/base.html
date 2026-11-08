@@ -15,7 +15,7 @@
             <div class="d-flex align-items-center">
                 <a href="{% url 'cart:cart_detail' %}" class="btn btn-outline-warning btn-sm me-3">
                     <i class="bi bi-cart3"></i> Cart
-                    {% with total_items=request.session.cart|length %}
+                    {% with total_items=cart|length %}
                         {% if total_items > 0 %}
                             <span class="badge bg-danger">{{ total_items }}</span>
                         {% else %}
@@ -44,6 +44,19 @@
     </nav>
 
     <main class="container mb-5">
+        {% if messages %}
+            <div class="row justify-content-center mb-3">
+                <div class="col-md-10">
+                    {% for message in messages %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
         {% block content %}{% endblock %}
     </main>
 

@@ -1,17 +1,22 @@
 from django import forms
+from store.models import Book
 
-
-PRODUCT_QUANTITY_CHOICES = [(i, str(i)) for i in range(1, 21)]
-
-
-class CartAddProductForm(forms.Form):
-    quantity = forms.TypedChoiceField(
-        choices=PRODUCT_QUANTITY_CHOICES,
-        coerce=int,
-        label="Quantity",
+class CartAddBookForm(forms.Form):
+    quantity = forms.IntegerField(
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 100px;'})
     )
-    override = forms.BooleanField(
-        initial=False,
-        required=False,
-        widget=forms.HiddenInput,
-    )
+    override = forms.BooleanField(required=False, initial=False, widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        self.book = kwargs.pop('book', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data['quantity']
+        if self.book and quantity > self.book.stock:
+            raise forms.ValidationError(
+                f"Unfortunately, there are only {self.book.stock} copies of this book in stock."
+            )
+        return quantity
