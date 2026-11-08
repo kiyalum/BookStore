@@ -31,8 +31,6 @@ class CustomUserAdmin(UserAdmin):
     list_display = ("email", "username", "phone", "is_staff", "is_superuser")
     search_fields = ("email", "username", "phone")
     list_filter = ("is_staff", "is_superuser", "is_active")
-
-    # Додаємо поле phone у форму редагування користувача в адмінці
     fieldsets = UserAdmin.fieldsets + (
         ("Additional Info", {"fields": ("phone",)}),
     )
