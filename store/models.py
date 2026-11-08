@@ -5,9 +5,12 @@ from django.db import models
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True, verbose_name="Email Address")
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Phone Number")
+    address = models.CharField(max_length=100, blank=True, null=True, verbose_name="Address")
+    city = models.CharField(max_length=50, blank=True, null=True, verbose_name="City")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         verbose_name = "User"
