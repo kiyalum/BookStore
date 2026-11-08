@@ -22,6 +22,13 @@
                     <span class="badge bg-danger fs-6">Out of stock</span>
                 {% endif %}
             </div>
+        
+            {% if book.stock > 0 %}
+            <form action="{% url 'cart:cart_add' book.id %}" method="post" class="mb-4">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-lg w-100">Add to Cart</button>
+            </form>
+            {% endif %}
 
             <div class="d-flex justify-content-between">
                 <a href="{% url 'store:book_list' %}" class="btn btn-secondary">Back to Catalog</a>

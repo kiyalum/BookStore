@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Shopping Cart - Bookstore{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm border-0 p-4">
+            <h2 class="mb-4 fw-bold">Your Shopping Cart</h2>
+            {% if cart %}
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Quantity</th>
+                            <th>Remove</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart %}
+                            {% with book=item.book %}
+                            <tr>
+                                <td class="fw-semibold">{{ book.title }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>
+                                    <form action="{% url 'cart:cart_remove' book.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                    </form>
+                                </td>
+                                <td>${{ item.price }}</td>
+                                <td class="fw-bold">${{ item.total_price }}</td>
+                            </tr>
+                            {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end fs-5"><b>Total:</b></td>
+                            <td class="fs-5 fw-bold text-success">${{ cart.get_total_price }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'store:book_list' %}" class="btn btn-secondary">Continue Shopping</a>
+                    <a href="{% url 'orders:order_create' %}" class="btn btn-success">Proceed to Checkout</a>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted fs-5">Your cart is empty.</p>
+                    <a href="{% url 'store:book_list' %}" class="btn btn-primary mt-2">Go to Catalog</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

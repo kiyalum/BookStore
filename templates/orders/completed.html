@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Success - Bookstore{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 p-5 text-center">
+            <div class="alert alert-success border-0 mb-4" role="alert">
+                <h2 class="alert-heading fw-bold">Payment Successful!</h2>
+                <p class="fs-5">Thank you, {{ order.first_name }}. Your payment has been successfully processed.</p>
+            </div>
+            <p class="text-muted">Order ID: <b>#{{ order.id }}</b>. We have sent a confirmation email to <b>{{ order.email }}</b>.</p>
+            <div class="mt-4">
+                <a href="{% url 'store:book_list' %}" class="btn btn-primary">Return to Catalog</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
