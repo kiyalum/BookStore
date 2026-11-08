@@ -1,25 +1,17 @@
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
-from store.models import Book
-from .cart import Cart
+from django import forms
 
 
-@require_POST
-def cart_add(request, book_id):
-    cart = Cart(request)
-    book = get_object_or_404(Book, id=book_id)
-    cart.add(book=book)
-    return redirect('cart:cart_detail')
+PRODUCT_QUANTITY_CHOICES = [(i, str(i)) for i in range(1, 21)]
 
 
-@require_POST
-def cart_remove(request, book_id):
-    cart = Cart(request)
-    book = get_object_or_404(Book, id=book_id)
-    cart.remove(book)
-    return redirect('cart:cart_detail')
-
-
-def cart_detail(request):
-    cart = Cart(request)
-    return render(request, 'cart/detail.html', {'cart': cart})
+class CartAddProductForm(forms.Form):
+    quantity = forms.TypedChoiceField(
+        choices=PRODUCT_QUANTITY_CHOICES,
+        coerce=int,
+        label="Quantity",
+    )
+    override = forms.BooleanField(
+        initial=False,
+        required=False,
+        widget=forms.HiddenInput,
+    )
