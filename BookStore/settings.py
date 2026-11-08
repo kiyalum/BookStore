@@ -72,7 +72,7 @@ WSGI_APPLICATION = 'BookStore.wsgi.application'
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'default-secret-key')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-g%@e9v_#wmp1-tawdf+&*bqpagb@f@#)76zw4b)-^^5ph8_zt$')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
@@ -138,6 +138,7 @@ MAILERS = {
     },
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'store.CustomUser'
 
@@ -167,4 +168,8 @@ LOGIN_URL = 'store:login'
 LOGIN_REDIRECT_URL = 'store:book_list'
 LOGOUT_REDIRECT_URL = 'store:book_list'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CART_SESSION_ID = 'cart'
+
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_51MockPublishableKeyForDevelopment')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_51MockSecretKeyForDevelopment')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_MockWebhookSecret')
