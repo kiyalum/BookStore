@@ -22,11 +22,12 @@
                     <span class="badge bg-danger fs-6">Out of stock</span>
                 {% endif %}
             </div>
-        
+
             {% if book.stock > 0 %}
-            <form action="{% url 'cart:cart_add' book.id %}" method="post" class="mb-4">
+            <form action="{% url 'cart:cart_add' book.id %}" method="post">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-success btn-lg w-100">Add to Cart</button>
+                {{ cart_product_form.as_p }}
+                <button type="submit" class="btn btn-primary">Add to cart</button>
             </form>
             {% endif %}
 

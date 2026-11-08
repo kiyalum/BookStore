@@ -64,7 +64,6 @@ def payment_process(request, order_id):
         cancel_url = request.build_absolute_uri(reverse("orders:payment_canceled", args=[order.id]))
 
         session_data = {
-            'payment_method_types': ['card'],
             'line_items': [],
             'mode': 'payment',
             'client_reference_id': order.id,
@@ -76,7 +75,7 @@ def payment_process(request, order_id):
             session_data['line_items'].append({
                 'price_data': {
                     'unit_amount': int(item.price * 100),
-                    'currency': "uah",
+                    'currency': "UAH",
                     'product_data': {
                         'name': item.book.title,
                     },
@@ -115,9 +114,9 @@ def payment_completed(request, order_id):
     return render(request, 'orders/completed.html', {'order': order})
 
 
-def payment_canceled(request):
+def payment_canceled(request, order_id=None):
     """Page for cancel_url"""
-    return render(request, 'orders/canceled.html')
+    return render(request, 'orders/canceled.html', {'order_id': order_id})
 
 
 @csrf_exempt

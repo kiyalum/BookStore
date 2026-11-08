@@ -2,8 +2,10 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from .models import Book, Category
+from .models import Book, Category, UserCart
 from .forms import BookForm, UserRegistrationForm
+from cart.forms import CartAddBookForm
+
 
 
 class UserRegisterView(CreateView):
@@ -16,9 +18,43 @@ class CustomLoginView(LoginView):
     template_name = 'store/login.html'
     redirect_authenticated_user = True
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        user = self.request.user
+        session_cart = self.request.session.get('cart', {})
+        if session_cart:
+            user_cart, created = UserCart.objects.get_or_create(user=user)
+            for book_id, item_data in session_cart.items():
+                try:
+                    book = Book.objects.get(id=int(book_id))
+                except Book.DoesNotExist:
+                    continue
+
+                guest_quantity = item_data['quantity']
+
+                if book_id in user_cart.cart_data:
+                    current_quantity = user_cart.cart_data[book_id]['quantity']
+                    new_quantity = current_quantity + guest_quantity
+                    user_cart.cart_data[book_id]['quantity'] = min(new_quantity, book.stock)
+                else:
+                    item_data['quantity'] = min(guest_quantity, book.stock)
+                    user_cart.cart_data[book_id] = item_data
+            user_cart.save()
+            if 'cart' in self.request.session:
+                del self.request.session['cart']
+        return response
+
 
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('store:book_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        cart_data = request.session.get('cart')
+        response = super().dispatch(request, *args, **kwargs)
+        if cart_data:
+            request.session['cart'] = cart_data
+            request.session.modified = True
+        return response
 
 
 class BookListView(ListView):
@@ -48,6 +84,11 @@ class BookDetailView(DetailView):
     model = Book
     template_name = "store/book_detail.html"
     context_object_name = "book"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['cart_product_form'] = CartAddBookForm(initial={'quantity': 1, 'override': False})
+        return context
 
 
 class BookCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):

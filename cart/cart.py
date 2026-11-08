@@ -1,31 +1,58 @@
 from decimal import Decimal
 from django.conf import settings
-from store.models import Book
+from store.models import Book, UserCart
+
 
 class Cart:
     def __init__(self, request):
-        """Initialise the cart."""
+        """Initialise the cart (database for authenticated users, session for guests)."""
+        self.request = request
         self.session = request.session
-        cart = self.session.get(settings.CART_SESSION_ID)
-        if not cart:
-            cart = self.session[settings.CART_SESSION_ID] = {}
-        self.cart = cart
+        self.user = request.user
+
+        if self.user.is_authenticated:
+            user_cart, created = UserCart.objects.get_or_create(user=self.user)
+            self.cart = user_cart.cart_data
+        else:
+            cart = self.session.get(settings.CART_SESSION_ID)
+            if not cart:
+                cart = self.session[settings.CART_SESSION_ID] = {}
+            self.cart = cart
 
     def add(self, book, quantity=1, override_quantity=False):
         """Add a book to the cart."""
         book_id = str(book.id)
-        if override_quantity not in self.cart:
-            self.cart[book_id] = {
-                'quantity': 0,
-                'price': str(book.price)
-            }
+        if book_id not in self.cart:
+            self.cart[book_id] = {'quantity': 0, 'price': str(book.price)}
+
+        current_quantity = self.cart[book_id]['quantity']
+
         if override_quantity:
-            self.cart[book_id]['quantity'] = quantity
+            target_quantity = quantity
         else:
-            self.cart[book_id]['quantity'] += quantity
+            target_quantity = current_quantity + quantity
+
+        if target_quantity > book.stock:
+            if current_quantity >= book.stock:
+                raise ValueError("Не має більше книжок в наявності.")
+            else:
+                raise ValueError(f"На жаль, на складі є лише {book.stock} шт. цієї книги.")
+
+        self.cart[book_id]['quantity'] = target_quantity
+        self.save()
 
     def remove(self, book):
         """Remove a book from the cart."""
+        book_id = str(book.id)
+        if book_id in self.cart:
+            if self.cart[book_id]['quantity'] > 1:
+                self.cart[book_id]['quantity'] -= 1
+            else:
+                del self.cart[book_id]
+            self.save()
+
+    def remove_completely(self, book):
+        """Completely remove a book from the cart."""
         book_id = str(book.id)
         if book_id in self.cart:
             del self.cart[book_id]
@@ -33,12 +60,18 @@ class Cart:
 
     def clear(self):
         """Remove all items from the cart."""
-        del self.session[settings.CART_SESSION_ID]
+        self.cart = {}
         self.save()
 
     def save(self):
-        """Save the cart."""
-        self.session.modified = True
+        """Save the cart (to DB if user is auth, otherwise to session)."""
+        if self.user.is_authenticated:
+            user_cart, created = UserCart.objects.get_or_create(user=self.user)
+            user_cart.cart_data = self.cart
+            user_cart.save()
+        else:
+            self.session[settings.CART_SESSION_ID] = self.cart
+            self.session.modified = True
 
     def __iter__(self):
         """Iterate over the cart."""
