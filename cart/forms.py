@@ -1,5 +1,5 @@
 from django import forms
-from store.models import Book
+
 
 class CartAddBookForm(forms.Form):
     quantity = forms.IntegerField(

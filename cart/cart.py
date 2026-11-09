@@ -34,9 +34,9 @@ class Cart:
 
         if target_quantity > book.stock:
             if current_quantity >= book.stock:
-                raise ValueError("Не має більше книжок в наявності.")
+                raise ValueError("There are no more books available.")
             else:
-                raise ValueError(f"На жаль, на складі є лише {book.stock} шт. цієї книги.")
+                raise ValueError(f"Unfortunately, there are only {book.stock} copies of this book in stock.")
 
         self.cart[book_id]['quantity'] = target_quantity
         self.save()
