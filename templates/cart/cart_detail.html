@@ -24,7 +24,6 @@
                             <tr>
                                 <td class="fw-semibold">{{ book.title }}</td>
                                 <td>
-                                    <!-- Форма для оновлення кількості -->
                                     <form action="{% url 'cart:cart_add' book.id %}" method="post" class="d-flex align-items-center">
                                         {% csrf_token %}
                                         <input type="hidden" name="override" value="True">
