@@ -18,7 +18,7 @@ def order_create(request):
     cart = Cart(request)
 
     if not cart:
-        messages.error(request, "Ваш кошик порожній.")
+        messages.error(request, "Your cart is empty.")
         return redirect('cart:cart_detail')
 
     for item in cart:
@@ -49,22 +49,19 @@ def order_create(request):
                     for item in cart:
                         book = item['book']
                         quantity = item['quantity']
-
                         OrderItem.objects.create(
                             order=order,
                             book=book,
                             price=item['price'],
                             quantity=quantity
                         )
-                        book.stock -= quantity
-                        book.save()
                         line_items.append({
                             'price_data': {
                                 'currency': 'usd',
                                 'product_data': {
                                     'name': book.title,
                                 },
-                                'unit_amount': int(item['price'] * 100),  # у центах
+                                'unit_amount': int(item['price'] * 100),
                             },
                             'quantity': quantity,
                         })
@@ -75,7 +72,6 @@ def order_create(request):
                         success_url=request.build_absolute_uri(reverse('orders:payment_completed', args=[order.id])),
                         cancel_url=request.build_absolute_uri(reverse('orders:payment_canceled', args=[order.id])),
                     )
-                cart.clear()
                 return redirect(checkout_session.url, code=303)
             except Exception as ex:
                 messages.error(request, f"An error occurred while creating the order: {ex}")
@@ -137,18 +133,23 @@ def payment_process(request, order_id):
 def payment_completed(request, order_id):
     """Page for success_url"""
     order = get_object_or_404(Order, id=order_id)
+    if not order.paid:
+        with transaction.atomic():
+            order.paid = True
+            order.status = 'paid'
+            order.save()
+            for item in order.items.all():
+                book = item.book
+                book.stock = max(0, book.stock - item.quantity)
+                book.save()
 
-    order.paid = True
-    order.status = 'paid'
-    order.save()
-
-    send_mail(
-        subject=f'Order #{order.id} Successful',
-        message=f'Hi {order.first_name},\n\nThank you for your purchase! Your order ID is {order.id}.',
-        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@store.com'),
-        recipient_list=[order.email],
-        fail_silently=True,
-    )
+        send_mail(
+            subject=f'Order #{order.id} Successful',
+            message=f'Hi {order.first_name},\n\nThank you for your purchase! Your order ID is {order.id}.',
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@store.com'),
+            recipient_list=[order.email],
+            fail_silently=True,
+        )
 
     Cart(request).clear()
     return render(request, 'orders/completed.html', {'order': order})
