@@ -15,7 +15,7 @@
             <p class="text-secondary fs-5 mb-4">{{ book.description }}</p>
             
             <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                <span class="fs-3 fw-bold text-success">${{ book.price }}</span>
+                <span class="fs-3 fw-bold text-success">{{ book.price }} UAH</span>
                 {% if book.stock > 0 %}
                     <span class="badge bg-success fs-6">In stock ({{ book.stock }} available)</span>
                 {% else %}

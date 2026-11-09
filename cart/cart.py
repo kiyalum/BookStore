@@ -19,12 +19,14 @@ class Cart:
                 cart = self.session[settings.CART_SESSION_ID] = {}
             self.cart = cart
 
-    def add(self, book, quantity=1, override_quantity=False):
+    def add(self, book, quantity=1, override_quantity=False, check_stock=True):
         """Add a book to the cart."""
         book_id = str(book.id)
         if book_id not in self.cart:
-            self.cart[book_id] = {'quantity': 0, 'price': str(book.price)}
-
+            self.cart[book_id] = {
+                'quantity': 0,
+                'price': str(book.price)
+            }
         current_quantity = self.cart[book_id]['quantity']
 
         if override_quantity:
@@ -32,11 +34,14 @@ class Cart:
         else:
             target_quantity = current_quantity + quantity
 
-        if target_quantity > book.stock:
+        if check_stock and target_quantity > book.stock:
             if current_quantity >= book.stock:
                 raise ValueError("There are no more books available.")
             else:
                 raise ValueError(f"Unfortunately, there are only {book.stock} copies of this book in stock.")
+
+        if target_quantity > book.stock:
+            target_quantity = book.stock
 
         self.cart[book_id]['quantity'] = target_quantity
         self.save()
@@ -75,16 +80,17 @@ class Cart:
 
     def __iter__(self):
         """Iterate over the cart."""
-        books_ids = self.cart.keys()
-        books = Book.objects.filter(id__in=books_ids)
-        cart = self.cart.copy()
-        for book in books:
-            cart[str(book.id)]['book'] = book
+        book_ids = self.cart.keys()
+        books = Book.objects.filter(id__in=book_ids)
 
-        for item in cart.values():
-            item['price'] = Decimal(item['price'])
-            item['total_price'] = item['price'] * item['quantity']
-            yield item
+        for book in books:
+            book_id = str(book.id)
+            if book_id in self.cart:
+                item = self.cart[book_id].copy()
+                item['book'] = book
+                item['price'] = Decimal(item['price'])
+                item['total_price'] = item['price'] * item['quantity']
+                yield item
 
     def __len__(self):
         """Return the number of items in the cart."""
