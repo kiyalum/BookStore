@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
@@ -14,32 +15,71 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 def order_create(request):
-    """Create a new order"""
     cart = Cart(request)
-    if len(cart) == 0:
+
+    if not cart:
+        messages.error(request, "Ваш кошик порожній.")
         return redirect('cart:cart_detail')
+
+    for item in cart:
+        book = item['book']
+        cart_quantity = item['quantity']
+
+        if cart_quantity > book.stock:
+            if book.stock == 0:
+                messages.error(request, f"Unfortunately, the book '{book.title}' is sold out and no longer available.")
+            else:
+                messages.error(
+                    request,
+                    f"Unfortunately, the book '{book.title}' is only available in stock in quantity {book.stock} pieces."
+                )
+            cart.add(book=book, quantity=book.stock, override_quantity=True, check_stock=False)
+            return redirect('cart:cart_detail')
 
     if request.method == 'POST':
         form = OrderCreateForm(request.POST)
         if form.is_valid():
-            with transaction.atomic():
-                order = form.save(commit=False)
-                if request.user.is_authenticated:
-                    order.customer = request.user
+            try:
+                with transaction.atomic():
+                    order = form.save(commit=False)
+                    if request.user.is_authenticated:
+                        order.user = request.user
+                    order.save()
+                    line_items = []
+                    for item in cart:
+                        book = item['book']
+                        quantity = item['quantity']
 
-                order.status = 'created'
-                order.paid = False
-                order.save()
-
-                for item in cart:
-                    OrderItem.objects.create(
-                        order=order,
-                        book=item['book'],
-                        price=item['price'],
-                        quantity=item['quantity']
+                        OrderItem.objects.create(
+                            order=order,
+                            book=book,
+                            price=item['price'],
+                            quantity=quantity
+                        )
+                        book.stock -= quantity
+                        book.save()
+                        line_items.append({
+                            'price_data': {
+                                'currency': 'usd',
+                                'product_data': {
+                                    'name': book.title,
+                                },
+                                'unit_amount': int(item['price'] * 100),  # у центах
+                            },
+                            'quantity': quantity,
+                        })
+                    request.session['order_id'] = order.id
+                    checkout_session = stripe.checkout.Session.create(
+                        line_items=line_items,
+                        mode='payment',
+                        success_url=request.build_absolute_uri(reverse('orders:payment_completed', args=[order.id])),
+                        cancel_url=request.build_absolute_uri(reverse('orders:payment_canceled', args=[order.id])),
                     )
-
-            return redirect('orders:payment_process', order_id=order.id)
+                cart.clear()
+                return redirect(checkout_session.url, code=303)
+            except Exception as ex:
+                messages.error(request, f"An error occurred while creating the order: {ex}")
+                return redirect('cart:cart_detail')
     else:
         initial_data = {}
         if request.user.is_authenticated:

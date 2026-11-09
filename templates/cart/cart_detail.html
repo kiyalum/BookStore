@@ -42,8 +42,8 @@
                                         </button>
                                     </form>
                                 </td>
-                                <td>${{ item.price }}</td>
-                                <td class="fw-bold">${{ item.total_price }}</td>
+                                <td>{{ item.price }} UAH</td>
+                                <td class="fw-bold">{{ item.total_price }} UAH</td>
                             </tr>
                             {% endwith %}
                         {% endfor %}
@@ -51,7 +51,7 @@
                     <tfoot>
                         <tr>
                             <td colspan="4" class="text-end fs-5"><b>Total:</b></td>
-                            <td class="fs-5 fw-bold text-success">${{ cart.get_total_price }}</td>
+                            <td class="fs-5 fw-bold text-success">{{ cart.get_total_price }} UAH</td>
                         </tr>
                     </tfoot>
                 </table>
