@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.utils.text import slugify
 from django.db import models
 
 
@@ -31,7 +32,7 @@ class UserCart(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Name")
-    slug = models.SlugField(max_length=100, unique=True, verbose_name="Slug")
+    slug = models.SlugField(max_length=100, unique=True, blank=True, verbose_name="Slug")
 
     class Meta:
         verbose_name = "Category"
@@ -41,6 +42,17 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
 
 class Book(models.Model):
     title = models.CharField(max_length=100, verbose_name="Title")
@@ -48,7 +60,10 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Price")
     description = models.TextField(blank=True, verbose_name="Description")
     stock = models.PositiveIntegerField(default=0, verbose_name="Stock")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE,
+    is_active = models.BooleanField(default=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL,
+                                           null=True,
+                                           blank=True,
                                            related_name="books",
                                            verbose_name="Category")
 

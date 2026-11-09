@@ -1,3 +1,4 @@
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.views import LoginView, LogoutView
@@ -64,7 +65,7 @@ class BookListView(ListView):
     paginate_by = 4
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related("category")
+        queryset = super().get_queryset().filter(is_active=True).select_related("category")
         query = self.request.GET.get("q")
         if query:
             queryset = queryset.filter(title__icontains=query)
@@ -121,8 +122,13 @@ class BookDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
     def form_valid(self, form):
         self.object = self.get_object()
+        self.object.is_active = False
+        self.object.save()
+
         category = self.object.category
-        response = super().form_valid(form)
-        if category and not category.books.exists():
-            category.delete()
-        return response
+        if category:
+            active_books_count = category.books.filter(is_active=True).count()
+            if active_books_count == 0:
+                category.delete()
+
+        return redirect(self.success_url)
