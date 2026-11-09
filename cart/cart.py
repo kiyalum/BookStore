@@ -79,22 +79,35 @@ class Cart:
             self.session.modified = True
 
     def __iter__(self):
-        """Iterate over the cart."""
-        book_ids = self.cart.keys()
-        books = Book.objects.filter(id__in=book_ids)
+        """Iterate over the cart items and fetch active books from the database."""
+        book_ids = list(self.cart.keys())
+        books = Book.objects.filter(id__in=book_ids, is_active=True)
+        books_map = {str(book.id): book for book in books}
 
-        for book in books:
-            book_id = str(book.id)
-            if book_id in self.cart:
+        cart_updated = False
+        for book_id in list(self.cart.keys()):
+            if book_id in books_map:
                 item = self.cart[book_id].copy()
-                item['book'] = book
+                item['book'] = books_map[book_id]
                 item['price'] = Decimal(item['price'])
                 item['total_price'] = item['price'] * item['quantity']
                 yield item
+            else:
+                del self.cart[book_id]
+                cart_updated = True
+        if cart_updated:
+            self.save()
 
     def __len__(self):
-        """Return the number of items in the cart."""
-        return sum(item['quantity'] for item in self.cart.values())
+        """Counts the total number of items in the cart, considering only existing active books."""
+        book_ids = self.cart.keys()
+        active_books = Book.objects.filter(id__in=book_ids, is_active=True)
+        active_ids = {str(book.id) for book in active_books}
+        return sum(
+            item['quantity']
+            for book_id, item in self.cart.items()
+            if book_id in active_ids
+        )
 
     def get_total_price(self):
         """Return the total price of the cart."""

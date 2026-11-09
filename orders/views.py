@@ -57,7 +57,7 @@ def order_create(request):
                         )
                         line_items.append({
                             'price_data': {
-                                'currency': 'usd',
+                                'currency': 'UAH',
                                 'product_data': {
                                     'name': book.title,
                                 },
