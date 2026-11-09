@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h2>Помилка оплати</h2>
+    <h2>Payment error</h2>
     <div class="alert alert-danger" role="alert">
         {{ error }}
     </div>
-    <a href="{% url 'store:book_list' %}" class="btn btn-primary">Повернутися на головну</a>
+    <a href="{% url 'store:book_list' %}" class="btn btn-primary">Return to home page</a>
 </div>
 {% endblock %}
